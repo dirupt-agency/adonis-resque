@@ -1,7 +1,7 @@
 {{{
   exports({ to: app.configPath('resque.ts') })
 }}}
-import { defineConfig } from 'adonis-resque'
+import { defineConfig } from '@dirupt/adonis-resque'
 
 const resqueConfig = defineConfig({
     redisConnection: 'main',

@@ -3,7 +3,7 @@
   exports({ to: app.makePath('app/jobs/', jobFileName) })
 }}}
 
-import { BaseJob } from 'adonis-resque'
+import { BaseJob } from '@dirupt/adonis-resque'
 
 export default class {{jobName}} extends BaseJob {
     perform() {

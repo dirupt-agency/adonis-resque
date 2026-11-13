@@ -179,6 +179,45 @@ export default class MyJob extends BaseJob {
 }
 ```
 
+## Development
+
+The test suite runs against a real Redis, under 2 profiles: an ioredis `keyPrefix`, and a Redis user whose ACL is restricted to that prefix.
+
+```bash
+pnpm install
+pnpm test        # lint, then the suite with coverage
+pnpm quick:test  # the suite only
+
+# the suite against the other node-resque releases the package admits, installed under npm aliases
+pnpm test:node-resque:9.3.5
+pnpm test:node-resque:9.4.0
+pnpm test:node-resque:9.5.2
+pnpm test:matrix   # the locked release (9.7.1), then the 3 above
+```
+
+Each run prints the node-resque release it actually loaded. `NODE_RESQUE_VERSION` selects it, through a resolve hook registered first by `bin/test.ts`. Without it, the locked release is used.
+
+### node-resque releases
+
+The package patches 3 defects of node-resque's Worker and MultiWorker (see `node_resque_guards.ts`), so it only admits the releases those patches are proven against: `dependencies` declares `>=9.3.5 <9.8.0`, and `GUARDED_RANGE` carries the same bounds (a test fails when they differ). Outside that range, under an override for instance, the patches are not applied and a `ADONIS_RESQUE_UNGUARDED_NODE_RESQUE` warning says so at startup.
+
+A new node-resque minor enters only with its alias in the test matrix, a green `pnpm test:matrix`, and both ranges moved together. If that release fixes the defects upstream, drop the guards instead of widening them.
+
+Without `REDIS_HOST`, `bin/test.ts` starts a throwaway `redis:7-alpine` container (Docker required, labelled `adonis-resque-test=1`) and stops it when the suite ends. To run against a Redis you already have, set `REDIS_HOST`, `REDIS_PORT` and, if the default user has one, `REDIS_PASSWORD`. The suite then only touches keys under the `artest:` prefix, and creates then deletes one ACL user, `artest`. The suite fails if Redis does not answer within 15 seconds.
+
+### Releasing
+
+`.github/workflows/ci.yml` runs lint, typecheck, build and `pnpm test:matrix` against a Redis service on every push and pull request, and checks that the built package loads on Node 24.13. On a `v*` tag, once those pass, it publishes to npm through trusted publishing, with provenance and no token. A prerelease version goes under the `next` dist-tag.
+
+From a clean, up-to-date `v2`, with the version heading of `CHANGELOG.md` dated:
+
+```bash
+pnpm exec np 3.1.0-rc.0 --preview   # dry run
+pnpm exec np 3.1.0-rc.0             # bump, commit "chore(release): ...", tag, push
+```
+
+`np` never publishes here (`np.publish: false`): the pushed tag does, through CI.
+
 ## License
 
 [MIT](./LICENSE)

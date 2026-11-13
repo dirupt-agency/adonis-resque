@@ -8,14 +8,18 @@
  * file that was distributed with this source code.
  */
 
-import { Queue } from "node-resque";
+import { Queue } from "./node_resque.js";
 import { getConnection } from "./services/main.js";
 import { type NodeResqueJob } from "./types.js";
+import { reportErrors } from "./errors.js";
 
 /**
  * Create a NodeResque Queue
  * @docs https://github.com/actionhero/node-resque?tab=readme-ov-file#queues
  */
 export function createQueue(jobs: Record<string, NodeResqueJob>) {
-  return new Queue({ connection: getConnection() }, jobs);
+  return reportErrors(
+    new Queue({ connection: getConnection() }, jobs),
+    "queue",
+  );
 }

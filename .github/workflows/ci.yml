@@ -1,0 +1,94 @@
+# Lint, typecheck, build and the real-Redis suite on every push and pull request. On a `v*` tag,
+# once those pass, publish to npm through trusted publishing (OIDC, provenance, no token).
+# The npm trusted publisher is bound to this file name: keep `ci.yml`.
+name: ci
+
+on:
+  push:
+    branches: [v2]
+    tags: ['v*']
+  pull_request:
+    branches: [v2]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['24', '26']
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # bin/test.ts uses this server instead of starting a container of its own.
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: '6379'
+    steps:
+      - uses: actions/checkout@v7
+      # Reads the pnpm version from `packageManager`. Before setup-node, which caches with it.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      # The precompile hook runs the linter first.
+      - run: pnpm run build
+      # The locked node-resque, then every other release the package admits.
+      - run: pnpm run test:matrix
+
+  # node-resque 9.6 and later hide `Plugins` from the CJS lexer of Node before 24.15, which
+  # `engines` admits. The built package must still load there.
+  oldest-node-24:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.13.0'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: node --input-type=module -e "const pkg = await import('./build/index.js'); if (typeof pkg.Plugins.JobLock !== 'function') process.exit(1)"
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, oldest-node-24]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: pnpm install --frozen-lockfile
+      - name: The tag must match the package version
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm --version
+      - name: Publish, a prerelease under the `next` tag (prepublishOnly rebuilds)
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          case "$VERSION" in
+            *-*) npm publish --tag next ;;
+            *) npm publish ;;
+          esac

@@ -8,9 +8,10 @@
  * file that was distributed with this source code.
  */
 
-import { Scheduler } from "node-resque";
+import { Scheduler } from "./node_resque.js";
 import { getConnection } from "./services/main.js";
 import { type NodeResqueJob } from "./types.js";
+import { reportErrors } from "./errors.js";
 import Cron from "croner";
 import ms from "ms";
 
@@ -19,9 +20,12 @@ import ms from "ms";
  * @docs https://github.com/actionhero/node-resque?tab=readme-ov-file#scheduler
  */
 export function createScheduler() {
-  return new Scheduler({
-    connection: getConnection(),
-  });
+  return reportErrors(
+    new Scheduler({
+      connection: getConnection(),
+    }),
+    "scheduler",
+  );
 }
 
 export type Interval = NodeJS.Timeout | Cron;

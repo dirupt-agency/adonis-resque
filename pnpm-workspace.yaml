@@ -1,0 +1,5 @@
+# pnpm 11 refuses to install until each dependency build script is allowed or denied.
+# Both are denied: the build, the lint and the real-Redis test suite pass without them.
+allowBuilds:
+  '@swc/core': false
+  esbuild: false

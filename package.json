@@ -1,7 +1,7 @@
 {
   "name": "@dirupt/adonis-resque",
   "description": "Resque Queue for AdonisJS (fork with AdonisJS v7 support)",
-  "version": "3.1.0-rc.0",
+  "version": "3.1.0",
   "type": "module",
   "packageManager": "pnpm@11.1.3",
   "main": "build/index.js",

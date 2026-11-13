@@ -8,7 +8,7 @@
  * file that was distributed with this source code.
  */
 
-import { Plugins } from "node-resque";
+import { Plugins } from "./node_resque.js";
 
 type LockKey = string | (() => string);
 

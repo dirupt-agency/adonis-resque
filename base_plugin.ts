@@ -8,7 +8,7 @@
  * file that was distributed with this source code.
  */
 
-import { Plugin } from "node-resque";
+import { Plugin } from "./node_resque.js";
 
 export default abstract class BasePlugin extends Plugin {
   static create<T extends typeof BasePlugin>(

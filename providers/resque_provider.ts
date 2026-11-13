@@ -23,12 +23,19 @@ declare module "@adonisjs/core/types" {
 
 export default class ResqueProvider {
   command?: BaseCommand;
+  /**
+   * The `queue` singleton once something resolved it. Shutdown only ends a queue that exists:
+   * resolving it there would open a Redis connection just to close it, and fail on the way when
+   * Redis is down.
+   */
+  queue?: Queue;
   constructor(protected app: ApplicationService) {}
 
   async register() {
     this.app.container.singleton("queue", async () => {
       const jobs = await importAllJobs();
       const queue = createQueue(jobs);
+      this.queue = queue;
       await queue.connect();
       return queue;
     });
@@ -61,7 +68,6 @@ export default class ResqueProvider {
     if (this.command) {
       await this.command.terminate();
     }
-    const queue = await this.app.container.make("queue");
-    await queue.end();
+    await this.queue?.end();
   }
 }

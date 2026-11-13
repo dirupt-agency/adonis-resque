@@ -8,7 +8,7 @@
  * file that was distributed with this source code.
  */
 
-export { Worker, Plugins, Scheduler, Queue } from "node-resque";
+export { Worker, Plugins, Scheduler, Queue } from "./node_resque.js";
 export type { RedisConnections } from "@adonisjs/redis/types";
 import { type Plugin } from "node-resque";
 import type BaseJob from "./base_job.js";
@@ -36,8 +36,19 @@ export interface ResqueFailure {
   args: any[];
   pluginOptions?: Record<string, any>;
 }
+/**
+ * An `error` event of a node-resque instance the package built, see `errors.ts`.
+ */
+export interface ResqueError {
+  source: "queue" | "worker" | "multiWorker" | "scheduler";
+  error: unknown;
+  workerId?: number;
+  queue?: string;
+  job?: unknown;
+}
 declare module "@adonisjs/core/types" {
   interface EventsList {
     "resque:failure": ResqueFailure;
+    "resque:error": ResqueError;
   }
 }

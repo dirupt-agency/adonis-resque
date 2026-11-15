@@ -4,6 +4,8 @@ All notable changes to this package are documented in this file. The format foll
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-11-15
+
 ### Fixed
 
 - The `@adonisjs/redis` peer range is now `^10.0.0 || ^11.0.0` (was `^9.1.0`). Every 9.x release requires `@adonisjs/core` 6, so npm refused to install this package in an AdonisJS 7 application (`ERESOLVE`), and pnpm only warned. 10.x and 11.x are the releases built for `@adonisjs/core` 7.

@@ -142,7 +142,7 @@
   },
   "release-it": {
     "git": {
-      "requireBranch": "v2",
+      "requireBranch": "master",
       "requireCleanWorkingDir": true,
       "requireUpstream": true,
       "commitMessage": "chore(release): ${version}",

@@ -211,7 +211,7 @@ Without `REDIS_HOST`, `bin/test.ts` starts a throwaway `redis:7-alpine` containe
 
 `.github/workflows/ci.yml` runs lint, typecheck and `npm run test:matrix` against a Redis service on Node 24 and 26, on every push and pull request, and checks that the built package loads on Node 24.0.0, the floor of `engines`. On a `v*` tag, once those pass, it publishes to npm through trusted publishing, with provenance and no token, then creates the GitHub release from the version's section of `CHANGELOG.md`. A prerelease version goes under the `next` dist-tag.
 
-From a clean, up-to-date `v2`, with the changes written under `## [Unreleased]` in `CHANGELOG.md` and committed:
+From a clean, up-to-date `master`, with the changes written under `## [Unreleased]` in `CHANGELOG.md` and committed:
 
 ```bash
 npm run release -- patch --preRelease=rc --dry-run   # rehearsal, nothing is written

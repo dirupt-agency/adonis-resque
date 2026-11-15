@@ -4,6 +4,19 @@ All notable changes to this package are documented in this file. The format foll
 
 ## [Unreleased]
 
+### Fixed
+
+- The `@adonisjs/redis` peer range is now `^10.0.0 || ^11.0.0` (was `^9.1.0`). Every 9.x release requires `@adonisjs/core` 6, so npm refused to install this package in an AdonisJS 7 application (`ERESOLVE`), and pnpm only warned. 10.x and 11.x are the releases built for `@adonisjs/core` 7.
+
+### Changed
+
+- Releases are cut with `release-it` and published from CI on a pushed `v*` tag, through npm trusted publishing with provenance, and each one gets a GitHub release whose notes are its section of this file. Prereleases (`x.y.z-rc.N`) go to the `next` dist-tag, never `latest`. `np` is removed.
+- `CHANGELOG.md` headings follow Keep a Changelog (`## [x.y.z] - YYYY-MM-DD`). Entries are still written by hand.
+- Development moves from pnpm to npm with no lockfile, so CI tests the newest dependencies the declared ranges admit, as a consumer installs them.
+- CI checks that the built package loads on Node 24.0.0, the floor of `engines`, instead of 24.13.
+
+No runtime code change.
+
 ## [3.1.1-rc.0] - 2026-11-15
 
 ### Fixed

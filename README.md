@@ -12,9 +12,9 @@ This package is a fork of [`adonis-resque`](https://github.com/shiny/adonis-resq
 
 ## Versions
 
-| @dirupt/adonis-resque | @adonisjs/core | @adonisjs/redis |
-|-----------------------|----------------|-----------------|
-| ^3.\*.\*              | ^7.\*.\*       | ^9.\*.\*        |
+| @dirupt/adonis-resque | @adonisjs/core | @adonisjs/redis       |
+|-----------------------|----------------|-----------------------|
+| ^3.\*.\*              | ^7.\*.\*       | ^10.\*.\* or ^11.\*.\* |
 
 For AdonisJS v6, use the original package: [`adonis-resque@^2`](https://github.com/shiny/adonis-resque)
 

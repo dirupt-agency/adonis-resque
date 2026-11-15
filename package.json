@@ -73,7 +73,7 @@
   },
   "peerDependencies": {
     "@adonisjs/core": "^7.0.0",
-    "@adonisjs/redis": "^9.1.0"
+    "@adonisjs/redis": "^10.0.0 || ^11.0.0"
   },
   "author": "Chieh",
   "contributors": [

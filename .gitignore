@@ -130,3 +130,9 @@ dist
 .pnp.*
 
 build/
+# npm with no lockfile (.npmrc): none is ever committed
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lock
+bun.lockb

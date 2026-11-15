@@ -20,7 +20,7 @@ import { startRedis } from "../tests/helpers/redis.js";
  */
 const nodeResque = await loadedNodeResque();
 console.log(
-  `node-resque ${nodeResque.version}${nodeResque.alias ? ` (${nodeResque.alias})` : " (locked)"}`,
+  `node-resque ${nodeResque.version}${nodeResque.alias ? ` (${nodeResque.alias})` : " (resolved)"}`,
 );
 
 processCLIArgs(process.argv.splice(2));

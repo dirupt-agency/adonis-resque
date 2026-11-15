@@ -1,19 +1,30 @@
-# Lint, typecheck, build and the real-Redis suite on every push and pull request. On a `v*` tag,
-# once those pass, publish to npm through trusted publishing (OIDC, provenance, no token).
+# Lint, typecheck, the real-Redis suite and a load check on the Node floor, on every push and pull
+# request. On a `v*` tag, once those pass, publish to npm through trusted publishing (OIDC,
+# provenance, no token) and create the GitHub release from CHANGELOG.md.
 # The npm trusted publisher is bound to this file name: keep `ci.yml`.
-name: ci
+name: CI
 
 on:
   push:
     branches: [v2]
     tags: ['v*']
   pull_request:
-    branches: [v2]
 
 permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: '24'
+      - run: npm install
+      - run: npm run lint
+      - run: npm run typecheck
+
   test:
     name: test (node ${{ matrix.node }})
     runs-on: ubuntu-latest
@@ -36,59 +47,77 @@ jobs:
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: '6379'
     steps:
-      - uses: actions/checkout@v7
-      # Reads the pnpm version from `packageManager`. Before setup-node, which caches with it.
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: ${{ matrix.node }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run typecheck
-      # The precompile hook runs the linter first.
-      - run: pnpm run build
-      # The locked node-resque, then every other release the package admits.
-      - run: pnpm run test:matrix
+      - run: npm install
+      # The node-resque that `dependencies` resolves to, then every other release the package admits.
+      - run: npm run test:matrix
 
-  # node-resque 9.6 and later hide `Plugins` from the CJS lexer of Node before 24.15, which
-  # `engines` admits. The built package must still load there.
-  oldest-node-24:
+  oldest-node:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
-          node-version: '24.13.0'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
-      - run: node --input-type=module -e "const pkg = await import('./build/index.js'); if (typeof pkg.Plugins.JobLock !== 'function') process.exit(1)"
+          node-version: '24'
+      - run: npm install
+      - run: npm run build
+      # The oldest Node 24 that engines.node admits. Change it with engines.node.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: '24.0.0'
+      # node-resque 9.6 and later hide `Plugins` from the CJS lexer of Node before 24.15, so the
+      # check reads a re-exported plugin, not only the import.
+      - name: The built package loads on the oldest supported Node
+        run: node --input-type=module -e "const pkg = await import('./build/index.js'); if (typeof pkg.Plugins.JobLock !== 'function') process.exit(1)"
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test, oldest-node-24]
+    needs: [lint, test, oldest-node]
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: '24'
-          registry-url: https://registry.npmjs.org
+          registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
-      - run: pnpm install --frozen-lockfile
+      - run: npm install
       - name: The tag must match the package version
         run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
-      # Trusted publishing needs npm 11.5.1 or later.
-      - run: npm --version
-      - name: Publish, a prerelease under the `next` tag (prepublishOnly rebuilds)
+      - name: Trusted publishing needs npm 11.5.1 or later
+        run: |
+          node -e '
+            const raw = process.argv[1]
+            const [major, minor, patch] = raw.split(".").map(Number)
+            const ok = major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1)))
+            if (!ok) { console.error("npm " + raw + " is older than 11.5.1"); process.exit(1) }
+          ' "$(npm --version)"
+      - name: Publish, a prerelease under the next dist-tag
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           case "$VERSION" in
             *-*) npm publish --tag next ;;
             *) npm publish ;;
           esac
+      - name: Create the GitHub release from the changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          test -s "$RUNNER_TEMP/notes.md"
+          case "$VERSION" in
+            *-*) PRERELEASE="--prerelease" ;;
+            *) PRERELEASE="" ;;
+          esac
+          gh release create "v$VERSION" --verify-tag --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" $PRERELEASE

@@ -33,7 +33,7 @@
 
 /**
  * Releases the guards are proven against by `tests/part_b.spec.ts`, run on 9.3.5, 9.4.0, 9.5.2
- * and 9.7.1 (`pnpm test:matrix`). The guarded methods are identical from 9.3.5 to 9.7.1, except
+ * and 9.7.1 (`npm run test:matrix`). The guarded methods are identical from 9.3.5 to 9.7.1, except
  * that before 9.5 the pause timer calls `poll()` without a `catch`, which the guarded `poll()`
  * makes harmless. `package.json` declares the same range for node-resque, a test holds them
  * equal: a new minor moves both, with its alias in the matrix.

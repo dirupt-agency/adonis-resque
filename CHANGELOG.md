@@ -1,6 +1,19 @@
 # Changelog
 
-## 3.1.0 (2026-11-13)
+All notable changes to this package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package follows [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Changed
+
+- Releases are cut with `release-it` and published from CI on a pushed `v*` tag, through npm trusted publishing with provenance, and each one gets a GitHub release whose notes are its section of this file. Prereleases (`x.y.z-rc.N`) go to the `next` dist-tag, never `latest`. `np` is removed.
+- `CHANGELOG.md` headings follow Keep a Changelog (`## [x.y.z] - YYYY-MM-DD`). Entries are still written by hand.
+- Development moves from pnpm to npm with no lockfile, so CI tests the newest dependencies the declared ranges admit, as a consumer installs them.
+- CI checks that the built package loads on Node 24.0.0, the floor of `engines`, instead of 24.13.
+
+No runtime code change.
+
+## [3.1.0] - 2026-11-13
 
 ### Read first
 
@@ -33,6 +46,6 @@ Worker ping keys have no expiry, and the stuck worker sweep never saw them under
 redis-cli --scan --pattern '<keyPrefix>resque:worker:ping:*' | wc -l
 ```
 
-## 3.0.0
+## [3.0.0] - 2026-03-06
 
 - Fork of [`adonis-resque`](https://github.com/shiny/adonis-resque) published as `@dirupt/adonis-resque`, with AdonisJS 7 support. Requires Node 24 or later, `@adonisjs/core` 7 and `@adonisjs/redis` 9.

@@ -13,8 +13,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * The node-resque releases the suite can run against besides the locked one, each installed
- * under an npm alias (`node-resque-<version>` in devDependencies).
+ * The node-resque releases the suite can run against besides the one `dependencies` resolves to,
+ * each installed under an npm alias (`node-resque-<version>` in devDependencies).
  */
 export const SELECTABLE_VERSIONS = ["9.3.5", "9.4.0", "9.5.2"] as const;
 
@@ -23,8 +23,8 @@ let selectedAlias: string | undefined;
 /**
  * Points every `node-resque` and `node-resque/<path>` specifier, from the package and from the
  * tests alike, at the aliased release NODE_RESQUE_VERSION names. Without the variable, nothing is
- * registered and the locked release is used. Must run before anything imports node-resque, which
- * is why `bin/test.ts` imports this module first.
+ * registered and the release `dependencies` resolves to is used. Must run before anything imports
+ * node-resque, which is why `bin/test.ts` imports this module first.
  */
 export function selectNodeResque(
   version = process.env.NODE_RESQUE_VERSION,

@@ -116,7 +116,7 @@ test.group("node-resque interop", () => {
   });
 
   test("Worker, Queue and Scheduler stay usable as types", ({ expect }) => {
-    // Compile-time check, enforced by `pnpm typecheck`: each name is both a value and a type.
+    // Compile-time check, enforced by `npm run typecheck`: each name is both a value and a type.
     const accepts = (
       _worker?: Worker,
       _queue?: Queue,
